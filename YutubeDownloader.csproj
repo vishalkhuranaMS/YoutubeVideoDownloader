@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediaToolKit" Version="1.1.0.1" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
     <PackageReference Include="VideoLibrary" Version="3.2.5" />
+    <PackageReference Include="Whisper.net" Version="1.5.0" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.5.0" />
     <PackageReference Include="YoutubeExplode" Version="6.0.8" />
   </ItemGroup>
 
