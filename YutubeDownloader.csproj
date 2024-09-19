@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.0.0-beta.5" />
     <PackageReference Include="MediaToolKit" Version="1.1.0.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />

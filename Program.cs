@@ -11,20 +11,24 @@ using MediaToolkit;
 using MediaToolkit.Model;
 using MediaToolkit.Options;
 using Microsoft.VisualBasic;
+using System.Text;
+using Azure.AI.OpenAI;
+using Azure;
+using OpenAI.Chat;
 
 
 class Program
 {
 	static async Task Main(string[] args)
 	{
-		if (args.Length == 0)
-		{
-			Console.WriteLine("url is null");
-			return;
-		}
+		//if (args.Length == 0)
+		//{
+		//	Console.WriteLine("url is null");
+		//	return;
+		//}
 
-		var url = args[0];
-		var video = GetYouTubeVideo(url);
+        var url = "https://www.youtube.com/watch?v=Tn6-PIqc4UM&t=70s";
+        var video = GetYouTubeVideo(url);
 
 		if (video == null)
 		{
@@ -34,7 +38,7 @@ class Program
 
 		// TODO : avoid using video.Title in filepath name
 
-		var filePath = Path.Combine(Directory.GetCurrentDirectory(), video.Title + ".mp4");
+		var filePath = Path.Combine(Directory.GetCurrentDirectory(), "ujgupta" + ".mp4");
 
 		using (var webClient = new WebClient())
 		{
@@ -43,15 +47,15 @@ class Program
 
 		Console.WriteLine($"Video downloaded to: {filePath}");
 
-		var audioPath = Path.Combine(Directory.GetCurrentDirectory(), video.Title + "_audio.wav");
+		var audioPath = Path.Combine(Directory.GetCurrentDirectory(), "ujgupta" + "_audio.wav");
 
 		// convert video to audio
-		ConvertAudioFromVideo(filePath, audioPath, video.Title);
+		ConvertAudioFromVideo(filePath, audioPath, "ujgupta");
 
 		// use model to get the transcript from the audio file.
 
-		var modelFileName = @"C:\Users\vikhurana\Downloads\ggml-base.bin";  // update your local path
-		var audioFileName = Path.Combine(Directory.GetCurrentDirectory(), video.Title + "16kHz_audio.wav");
+		var modelFileName = @"C:\Users\ujgupta\Downloads\ggml-base.bin";  // update your local path
+		var audioFileName = Path.Combine(Directory.GetCurrentDirectory(), "ujgupta" + "16kHz_audio.wav");
 		
 		if (!File.Exists(modelFileName))
 		{
@@ -69,13 +73,36 @@ class Program
 			
 			using var fileStream = File.OpenRead(audioFileName);
 			Console.WriteLine(fileStream.ToString());
-		
-			await foreach (var result in processor.ProcessAsync(fileStream))
+
+            StringBuilder transcriptBuilder = new StringBuilder();
+            await foreach (var result in processor.ProcessAsync(fileStream))
 			{
-				Console.WriteLine($"{result.Start}->{result.End}:{result.Text}");
+                transcriptBuilder.AppendLine($"{result.Start}->{result.End}: {result.Text}");
+                //Console.WriteLine($"{result.Start}->{result.End}:{result.Text}");
 			}
-		}
-		catch (EntryPointNotFoundException ex)
+
+            string videoTranscript = transcriptBuilder.ToString();
+
+            string openAIEndpoint = "";
+			string openAIKey = "";
+
+            AzureOpenAIClient client = new AzureOpenAIClient(new Uri(openAIEndpoint), new AzureKeyCredential(openAIKey));
+
+            var chatClient = client.GetChatClient("gpt-35-turbo");
+
+            // Prepare the prompt for summarization
+            string prompt = $"Below is a transcript of video in format starttime->endtime: transcript. Please summarize this while also combining the timeframes and The SUMMARY should look like - `starttime1->endtime1: summary1, starttime2->endtime2: summary2, starttime3->endtime3: summary3`. Here is the transcript of video:\n\n{videoTranscript}";
+
+            // Create a chat message
+            var chatMessage = ChatMessage.CreateSystemMessage(prompt);
+
+            // Send the message and get the response
+            var response = await chatClient.CompleteChatAsync(new[] { chatMessage });
+
+			Console.WriteLine(response.Value);
+
+        }
+        catch (EntryPointNotFoundException ex)
 		{
 			Console.WriteLine($"Error: {ex.Message}");
 		}
